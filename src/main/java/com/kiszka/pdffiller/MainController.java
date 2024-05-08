@@ -4,7 +4,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,9 +23,10 @@ import java.util.Scanner;
 public class MainController {
     static final int OFFSET_X = 26;
     static final int OFFSET_Y = 30;
-    private final static String[] values = new String[80];
+    private final static String[] values = new String[182];
     private static PDType0Font font;
     private static PDDocument document;
+    private static final double CHAR_WIDTH = 5.328;
 
     static{
         try {
@@ -59,7 +59,7 @@ public class MainController {
         Scanner scanner = new Scanner(file.getInputStream());
         while(scanner.hasNextLine()){
             String line = scanner.nextLine();
-            String[] vals = line.split(";");
+            String[] vals = line.split(",");
             for(String val : vals){
                 values[idx] = val;
                 idx++;
@@ -74,7 +74,7 @@ public class MainController {
         String text = values[0].replace("\uFEFF", "");
         /* FIRST TABLE FILLING */
         contentStream.newLineAtOffset(138,338);
-        contentStream.showText(text);
+        contentStream.showText(centerTextSmall(text));
         int idx = 0;
         for (int i = 1; i < 80; i++) {
             text = values[i].replace("\uFEFF","");
@@ -94,11 +94,11 @@ public class MainController {
                     contentStream.newLineAtOffset(OFFSET_X,0);
                 }
             }
-            contentStream.showText(text);
+            contentStream.showText(centerTextSmall(text));
         }
         contentStream.setFont(font,14);
-        contentStream.newLineAtOffset(OFFSET_X-350,225);
-        contentStream.showText("jdku");
+        contentStream.newLineAtOffset(OFFSET_X-365,225);
+        contentStream.showText(centerTextBig("jack"));
         contentStream.endText();
         contentStream.close();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -108,5 +108,21 @@ public class MainController {
     @GetMapping("/home")
     public String getHome(){
         return "home";
+    }
+    private String centerTextSmall(String text) {
+        int length = text.length();
+        return switch (length) {
+            case 1 -> String.format("%5s",text);
+            case 2,3 -> String.format("%4s",text);
+            default -> text;
+        };
+    }
+    private String centerTextBig(String text) {
+        int length = text.length();
+        return switch (length) {
+            case 1 -> String.format("%5s",text);
+            case 2,3 -> String.format("%5s",text);
+            default -> text;
+        };
     }
 }
