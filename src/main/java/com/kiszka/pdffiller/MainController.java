@@ -31,7 +31,7 @@ public class MainController {
     static{
         try {
             document = PDDocument.load(new File("src/main/resources/main_pdf.pdf"));
-            font = PDType0Font.load(document, new File("src/main/resources/Cambria-Bold.ttf"));
+            font = PDType0Font.load(document, new File("src/main/resources/cambria-Bold.ttf"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -67,34 +67,38 @@ public class MainController {
         }
     }
     private byte[] createPDF() throws Exception{
-
         PDPage page = document.getPage(0);
         PDPageContentStream contentStream = new PDPageContentStream(document,page, PDPageContentStream.AppendMode.APPEND,true);
         contentStream.beginText();
-        contentStream.setFont(PDType1Font.HELVETICA,8);
+        contentStream.setFont(font,9);
         String text = values[0].replace("\uFEFF", "");
+        /* FIRST TABLE FILLING */
         contentStream.newLineAtOffset(138,338);
         contentStream.showText(text);
         int idx = 0;
         for (int i = 1; i < 80; i++) {
             text = values[i].replace("\uFEFF","");
             if(i % 10 == 0) {
-                contentStream.newLineAtOffset(OFFSET_X-278, -OFFSET_Y);
+                contentStream.newLineAtOffset(OFFSET_X-275, -OFFSET_Y);
                 idx++;
             } else {
-                if((i-idx*10)%7==0) {
-                    contentStream.newLineAtOffset(OFFSET_X+7,0);
-                } else if((i-idx*10)%9==0){
-                    contentStream.newLineAtOffset(OFFSET_X+5,0);
-                }
-                else if((i-idx*10)%8==0){
+                if((i-idx*10)%6==0) {
+                    contentStream.newLineAtOffset(OFFSET_X+3,0);
+                } else if((i-idx*10)%7==0) {
                     contentStream.newLineAtOffset(OFFSET_X+6,0);
-                }else {
+                } else if((i-idx*10)%8==0){
+                    contentStream.newLineAtOffset(OFFSET_X+5,0);
+                }else if((i-idx*10)%9==0){
+                    contentStream.newLineAtOffset(OFFSET_X+1,0);
+                } else {
                     contentStream.newLineAtOffset(OFFSET_X,0);
                 }
             }
             contentStream.showText(text);
         }
+        contentStream.setFont(font,14);
+        contentStream.newLineAtOffset(OFFSET_X-350,225);
+        contentStream.showText("jdku");
         contentStream.endText();
         contentStream.close();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
