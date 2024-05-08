@@ -3,6 +3,7 @@ package com.kiszka.pdffiller;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 @Controller
@@ -23,6 +25,17 @@ public class MainController {
     static final int OFFSET_X = 26;
     static final int OFFSET_Y = 30;
     private final static String[] values = new String[80];
+    private static PDType0Font font;
+    private static PDDocument document;
+
+    static{
+        try {
+            document = PDDocument.load(new File("src/main/resources/main_pdf.pdf"));
+            font = PDType0Font.load(document, new File("src/main/resources/Cambria-Bold.ttf"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @PostMapping("/upload-csv")
     public ResponseEntity<ByteArrayResource> uploadFile(@RequestParam("file")MultipartFile file){
@@ -54,7 +67,7 @@ public class MainController {
         }
     }
     private byte[] createPDF() throws Exception{
-        PDDocument document = PDDocument.load(new File("src/main/resources/main_pdf.pdf"));
+
         PDPage page = document.getPage(0);
         PDPageContentStream contentStream = new PDPageContentStream(document,page, PDPageContentStream.AppendMode.APPEND,true);
         contentStream.beginText();
