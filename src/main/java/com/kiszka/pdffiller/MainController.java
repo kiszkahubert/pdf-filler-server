@@ -1,5 +1,6 @@
 package com.kiszka.pdffiller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
+@Slf4j
 @Controller
 public class MainController {
     static final int OFFSET_X = 26;
@@ -44,6 +47,9 @@ public class MainController {
         }
         try{
             processCSV(file);
+            for (var val : values){
+                System.out.println(val);
+            }
             byte[] pdfData = createPDF();
             ByteArrayResource resource = new ByteArrayResource(pdfData);
             return ResponseEntity.ok()
@@ -56,21 +62,46 @@ public class MainController {
     }
     private void processCSV(MultipartFile file) throws Exception{
         int idx = 0;
-        Scanner scanner = new Scanner(file.getInputStream());
-        while(scanner.hasNextLine()){
-            String line = scanner.nextLine();
-            String[] vals = line.split(",");
-            for(String val : vals){
-                values[idx] = val;
-                idx++;
+        List<String> valueList = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] tokens = splitCSVLine(line);
+                valueList.addAll(Arrays.asList(tokens));
             }
         }
+        for (var val : valueList){
+            values[idx] = val;
+            idx++;
+        }
+    }
+    private String[] splitCSVLine(String line) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(sb.toString().trim());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        tokens.add(sb.toString().trim());
+        return tokens.toArray(new String[0]);
     }
     private byte[] createPDF() throws Exception{
         PDPage page = document.getPage(0);
         PDPageContentStream contentStream = new PDPageContentStream(document,page, PDPageContentStream.AppendMode.APPEND,true);
         contentStream.beginText();
         contentStream.setFont(font,9);
+        for (var el:values){
+            log.info(el);
+        }
 
         /* FIRST TABLE FILLING */
         String text = values[0].replace("\uFEFF", "");
